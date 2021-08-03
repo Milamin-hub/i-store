@@ -2,8 +2,7 @@
 const ApiError = require('../error/ApiError');
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
-const crypto = require("crypto")
-const {User, Basket} = require('../models/models')
+const {User, Basket} = require('../models/models');
 
 
 
@@ -19,7 +18,7 @@ class UserController {
     async registration(req, res, next) {
         try {
 
-            const {email, role, password} = req.body
+            const {email, password, role} = req.body
 
             if (!email || !password) {
                 return next(ApiError.badRequest('Некорректный email или password'))
@@ -31,17 +30,13 @@ class UserController {
             }
 
 
-            let salt = await bcrypt.genSalt(5)
-
-            const Phash = await bcrypt.hash(password, salt)
-
-
-            const user = await User.create({email, role, password: Phash})
+            const hashPassword = await bcrypt.hash(password, 5)
+            const user = await User.create({email, role, password: hashPassword})
             const basket = await Basket.create({userId: user.id})
-            const token = await generateJwt(user.id, user.email, user.role)
-            return await res.json({token})
-
-
+            const token = generateJwt(user.id, user.email, user.role)
+            return res.json({token})
+            
+            
         } catch(e){
             console.log(e)
             res.status(501).send("error registration...")
@@ -84,3 +79,4 @@ class UserController {
 }
 
 module.exports = new UserController()
+
